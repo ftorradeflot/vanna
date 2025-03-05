@@ -1,6 +1,7 @@
 import os
 
 from ..base import VannaBase
+from google.genai import types
 
 
 class GoogleGeminiChat(VannaBase):
@@ -16,8 +17,8 @@ class GoogleGeminiChat(VannaBase):
         if "model_name" in config:
             model_name = config["model_name"]
         else:
-            model_name = "gemini-1.5-pro"
-
+            model_name = "gemini-2.0-flash"
+        self.model_name = model_name
         self.google_api_key = None
 
         if "api_key" in config or os.getenv("GOOGLE_API_KEY"):
@@ -25,10 +26,9 @@ class GoogleGeminiChat(VannaBase):
             If Google api_key is provided through config
             or set as an environment variable, assign it.
             """
-            import google.generativeai as genai
+            from google import genai
 
-            genai.configure(api_key=config["api_key"])
-            self.chat_model = genai.GenerativeModel(model_name)
+            self.client = genai.Client(api_key=config["api_key"])
         else:
             # Authenticate using VertexAI
             import google.auth
@@ -65,10 +65,14 @@ class GoogleGeminiChat(VannaBase):
         return message
 
     def submit_prompt(self, prompt, **kwargs) -> str:
-        response = self.chat_model.generate_content(
-            prompt,
-            generation_config={
-                "temperature": self.temperature,
-            },
+
+        sys_instruct=prompt[0]
+
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            config=types.GenerateContentConfig(
+                system_instruction=sys_instruct),
+            contents=prompt[-1]
         )
+
         return response.text

@@ -1616,7 +1616,8 @@ class VannaBase(ABC):
                                password=password,
                                database=dbname,
                                port=port,
-                               auth=auth)
+                               auth=auth,
+                               **kwargs)
       except hive.Error as e:
         raise ValidationError(e)
 
